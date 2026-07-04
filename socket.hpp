@@ -1,8 +1,5 @@
-//
-// Created by lhbdawn on 04-07-2026.
-//
-
-#ifndef SOCKET_HPP
-#define SOCKET_HPP
-
-#endif //SOCKET_HPP
+#pragma once
+namespace Socket {
+    void getdevices();
+    void ifprint(pcap_if_t *d);
+};
