@@ -35,5 +35,6 @@ int main() {
     //
     // /* We don't need any more the device list. Free it */
     // pcap_freealldevs(alldevs);
-    Socket::getdevices();
+    auto* dev = Socket::selectdev();
+    Socket::printpackets(dev);
 }
