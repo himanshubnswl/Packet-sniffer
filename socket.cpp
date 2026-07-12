@@ -4,11 +4,27 @@
 #include "pcap.h"
 #include <iostream>
 #include "socket.hpp"
-
+#include <cstdint>
 #include <format>
+#include <iomanip>
 #include <winsock2.h>
 
 namespace Socket {
+    struct header_type {
+        uint8_t MAC_DEST[6];
+        uint8_t MAC_SRC[6];
+        uint16_t type;
+    };
+    struct ipv4_header {
+        uint8_t protocol;
+        uint32_t source_addr;
+        uint32_t dest_addr;
+
+        ipv4_header(u_char* pkt) {
+            protocol = pkt[];
+        }
+    };
+
     pcap_if_t *getdevicelist() {
         pcap_if_t *alldevs;
         int i = 0;
@@ -58,13 +74,14 @@ namespace Socket {
             pcap_freealldevs(alldevs);
             std::exit(0);
         }
-        pcap_freealldevs(alldevs);
+        // pcap_freealldevs(alldevs);
         return selected_device;
     }
 
     int printpackets(pcap_if_t *dev) {
         pcap_t *adhandle{nullptr};
         char errbuf[PCAP_ERRBUF_SIZE];
+
         if ((adhandle = pcap_open(dev->name, 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, nullptr, errbuf)) == nullptr) {
             std::cerr << "unable to open device!";
             return -1;
@@ -79,23 +96,23 @@ namespace Socket {
     void packet_handler(u_char *param,
                         const struct pcap_pkthdr *header,
                         const u_char *pkt_data) {
-        struct tm ltime;
-        char timestr[16];
-        time_t local_tv_sec;
 
-        /*
-         * unused variables
-         */
-        (VOID) (param);
-        (VOID) (pkt_data);
-
+        auto* p_header = (header_type*)pkt_data;
         /* convert the timestamp to readable format */
-        local_tv_sec = header->ts.tv_sec;
-        localtime_s(&ltime, &local_tv_sec);
-        strftime(timestr, sizeof timestr, "%H:%M:%S", &ltime);
+        std::cout << "DEST MAC: ";
+        for (int i {0}; i < 6; i++) {
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(p_header->MAC_DEST[i]) << ":";
+        }
+        std::cout << "   SRC MAC: ";
+        for (int i {0}; i < 6; i++) {
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(p_header->MAC_SRC[i]) << ":";
+        }
+        if (ntohs(p_header->type) == 0x0800) {
+            std::cout << "  Type: " << "IPV4" << std::endl;
+        }else if (ntohs(p_header->type) == 0x86DD) {
+            std::cout << " Type: " << "IPV6" << std::endl;
+        }
 
-        printf("%s,%.6d len:%d\n",
-               timestr, header->ts.tv_usec, header->len);
-        std::cout << pkt_data;
+        //decoding the ipv4 header now
     }
 };
