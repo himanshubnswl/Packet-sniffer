@@ -15,13 +15,16 @@ namespace Socket {
         uint8_t MAC_SRC[6];
         uint16_t type;
     };
+
     struct ipv4_header {
         uint8_t protocol;
-        uint32_t source_addr;
-        uint32_t dest_addr;
+        uint8_t source_addr[4];
+        uint8_t dest_addr[4];
 
-        ipv4_header(const u_char* pkt) {
+        ipv4_header(const u_char *pkt) {
             protocol = pkt[9];
+            memcpy(source_addr, pkt + 12, 4);
+            memcpy(dest_addr, pkt + 16, 4);
         }
     };
 
@@ -88,7 +91,8 @@ namespace Socket {
         }
 
         std::cout << "listening on " << dev->description << std::endl;
-        pcap_loop(adhandle,0,packet_handler, nullptr);
+        std::cout << "MAC_DEST\t\t MAC_SRC\t\t TYPE\t\t PROTOCOL\t\t IP_SRC\t\t IP_DEST" << std::endl;
+        pcap_loop(adhandle, 0, packet_handler, nullptr);
 
         return 0;
     }
@@ -96,22 +100,26 @@ namespace Socket {
     void packet_handler(u_char *param,
                         const struct pcap_pkthdr *header,
                         const u_char *pkt_data) {
-
-        auto* p_header = (header_type*)pkt_data;
+        auto *p_header = (header_type *) pkt_data;
         /* convert the timestamp to readable format */
-        std::cout << "DEST MAC: ";
-        for (int i {0}; i < 6; i++) {
-            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(p_header->MAC_DEST[i]) << ":";
+        for (int i{0}; i < 6; i++) {
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(p_header->MAC_DEST[i]);
+            if (i < 5) {
+                std::cout << ":";
+            }
         }
-        std::cout << "   SRC MAC: ";
-        for (int i {0}; i < 6; i++) {
-            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(p_header->MAC_SRC[i]) << ":";
+        std::cout << "\t";
+        for (int i{0}; i < 6; i++) {
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(p_header->MAC_SRC[i]);
+            if (i < 5) {
+                std::cout << ":";
+            }
         }
+        std::cout << "\t";
         if (ntohs(p_header->type) == 0x0800) {
-            std::cout << "  Type: " << "IPV4";
-
-            ipv4_header ipv4head(pkt_data+14);
-            std::cout << " protocol: ";
+            std::cout << "IPV4";
+            std::cout << "\t\t";
+            ipv4_header ipv4head(pkt_data + 14);
             switch (ipv4head.protocol) {
                 case 1:
                     std::cout << "ICMP";
@@ -137,8 +145,20 @@ namespace Socket {
                 default:
                     std::cout << "parsing failed";
             }
+            std::cout << "\t\t";
+            std::cout << std::dec // switch back to decimal from hex
+                    << static_cast<int>(ipv4head.source_addr[0]) << "."
+                    << static_cast<int>(ipv4head.source_addr[1]) << "."
+                    << static_cast<int>(ipv4head.source_addr[2]) << "."
+                    << static_cast<int>(ipv4head.source_addr[3]);
+            std::cout << "\t\t";
+            std::cout << std::dec // switch back to decimal from hex
+                    << static_cast<int>(ipv4head.dest_addr[0]) << "."
+                    << static_cast<int>(ipv4head.dest_addr[1]) << "."
+                    << static_cast<int>(ipv4head.dest_addr[2]) << "."
+                    << static_cast<int>(ipv4head.dest_addr[3]);
             std::cout << std::endl;
-        }else if (ntohs(p_header->type) == 0x86DD) {
+        } else if (ntohs(p_header->type) == 0x86DD) {
             std::cout << " Type: " << "IPV6" << std::endl;
         }
 
