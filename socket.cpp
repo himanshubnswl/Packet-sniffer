@@ -20,8 +20,8 @@ namespace Socket {
         uint32_t source_addr;
         uint32_t dest_addr;
 
-        ipv4_header(u_char* pkt) {
-            protocol = pkt[];
+        ipv4_header(const u_char* pkt) {
+            protocol = pkt[9];
         }
     };
 
@@ -108,7 +108,36 @@ namespace Socket {
             std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(p_header->MAC_SRC[i]) << ":";
         }
         if (ntohs(p_header->type) == 0x0800) {
-            std::cout << "  Type: " << "IPV4" << std::endl;
+            std::cout << "  Type: " << "IPV4";
+
+            ipv4_header ipv4head(pkt_data+14);
+            std::cout << " protocol: ";
+            switch (ipv4head.protocol) {
+                case 1:
+                    std::cout << "ICMP";
+                    break;
+                case 2:
+                    std::cout << "IGMP";
+                    break;
+                case 6:
+                    std::cout << "TCP";
+                    break;
+                case 17:
+                    std::cout << "UDP";
+                    break;
+                case 41:
+                    std::cout << "ENCAP";
+                    break;
+                case 89:
+                    std::cout << "OSPF";
+                    break;
+                case 132:
+                    std::cout << "SCTP";
+                    break;
+                default:
+                    std::cout << "parsing failed";
+            }
+            std::cout << std::endl;
         }else if (ntohs(p_header->type) == 0x86DD) {
             std::cout << " Type: " << "IPV6" << std::endl;
         }
