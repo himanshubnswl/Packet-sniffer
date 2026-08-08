@@ -116,7 +116,8 @@ namespace Socket {
             }
         }
         std::cout << "\t";
-        if (ntohs(p_header->type) == 0x0800) {
+        if (ntohs(p_header->type) == 0x0800) { //checking if the packet is type ipv4
+            //ipv4 packet parsing starts here
             std::cout << "IPV4";
             std::cout << "\t\t";
             ipv4_header ipv4head(pkt_data + 14);
@@ -162,6 +163,10 @@ namespace Socket {
             std::cout << " Type: " << "IPV6" << std::endl;
         }
 
-        //decoding the ipv4 header now
     }
 };
+
+int main() {
+    auto* selected_device = Socket::selectdev();
+    Socket::printpackets(selected_device);
+}
