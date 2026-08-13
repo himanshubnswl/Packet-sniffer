@@ -11,7 +11,7 @@ struct packet_info {
     QString ip4_dest;
 };
 
-class MyModel : public QAbstractTableModel {
+class MyModel final : public QAbstractTableModel {
     Q_OBJECT
     std::vector<packet_info> data_array;
 public:

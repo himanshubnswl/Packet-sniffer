@@ -47,7 +47,7 @@ QVariant MyModel::data(const QModelIndex &index, int role) const {
                 break;
         }
     }
-    return QVariant();
+    return {};
 }
 
 void MyModel::add_packet(const packet_info& packet) {
@@ -69,6 +69,7 @@ QVariant MyModel::headerData(int section, Qt::Orientation orientation, int role)
             case 3: return "protocol";
             case 4: return "ipv4 source";
             case 5: return "ipv4 dest";
+            default: break;
         }
     }
     return {};

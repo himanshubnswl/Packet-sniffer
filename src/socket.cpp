@@ -1,15 +1,12 @@
 //
 // Created by lhbdawn on 04-07-2026.
 //
-#include "pcap.h"
-#include <iostream>
+
 #include "socket.hpp"
-#include <cstdint>
-#include <format>
-#include <iomanip>
-#include <winsock2.h>
 
 namespace Socket {
+
+    MyModel mymodel;
     struct header_type {
         uint8_t MAC_DEST[6];
         uint8_t MAC_SRC[6];
@@ -27,6 +24,10 @@ namespace Socket {
             memcpy(dest_addr, pkt + 16, 4);
         }
     };
+
+    void setmodelinstance(MyModel model) {
+        mymodel = model;
+    }
 
     pcap_if_t *getdevicelist() {
         pcap_if_t *alldevs;
@@ -97,76 +98,65 @@ namespace Socket {
         return 0;
     }
 
+    void handle_ipv4packet(packet_info& newpacket, const uchar* pkt_data) {
+        newpacket.int_type = "IPV4";
+        ipv4_header ipv4head(pkt_data + 14);
+        switch (ipv4head.protocol) {
+            case 1:
+                newpacket.protocol = "ICMP";
+                break;
+            case 2:
+                newpacket.protocol = "IGMP";
+                break;
+            case 6:
+                newpacket.protocol = "TCP";
+                break;
+            case 17:
+                newpacket.protocol = "UDP";
+                break;
+            case 41:
+                newpacket.protocol = "ENCAP";
+                break;
+            case 89:
+                newpacket.protocol = "OSPF";
+                break;
+            case 132:
+                newpacket.protocol = "SCTP";
+                break;
+            default: break;
+        }
+        newpacket.ip4_src = QString::asprintf("%d.%d.%d.%d", ipv4head.source_addr[0], ipv4head.source_addr[1],
+                                              ipv4head.source_addr[2], ipv4head.source_addr[3]);
+
+        newpacket.ip4_dest = QString::asprintf("%d.%d.%d.%d", ipv4head.dest_addr[0], ipv4head.dest_addr[1],
+                                              ipv4head.dest_addr[2], ipv4head.dest_addr[3]);
+    }
+
     void packet_handler(u_char *param,
                         const struct pcap_pkthdr *header,
                         const u_char *pkt_data) {
-        auto *p_header = (header_type *) pkt_data;
+        const auto *p_header = reinterpret_cast<const header_type*>(pkt_data);
+        packet_info newpacket;
         /* convert the timestamp to readable format */
-        for (int i{0}; i < 6; i++) {
-            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(p_header->MAC_DEST[i]);
-            if (i < 5) {
-                std::cout << ":";
-            }
-        }
-        std::cout << "\t";
-        for (int i{0}; i < 6; i++) {
-            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(p_header->MAC_SRC[i]);
-            if (i < 5) {
-                std::cout << ":";
-            }
-        }
-        std::cout << "\t";
-        if (ntohs(p_header->type) == 0x0800) { //checking if the packet is type ipv4
-            //ipv4 packet parsing starts here
-            std::cout << "IPV4";
-            std::cout << "\t\t";
-            ipv4_header ipv4head(pkt_data + 14);
-            switch (ipv4head.protocol) {
-                case 1:
-                    std::cout << "ICMP";
-                    break;
-                case 2:
-                    std::cout << "IGMP";
-                    break;
-                case 6:
-                    std::cout << "TCP";
-                    break;
-                case 17:
-                    std::cout << "UDP";
-                    break;
-                case 41:
-                    std::cout << "ENCAP";
-                    break;
-                case 89:
-                    std::cout << "OSPF";
-                    break;
-                case 132:
-                    std::cout << "SCTP";
-                    break;
-                default:
-                    std::cout << "parsing failed";
-            }
-            std::cout << "\t\t";
-            std::cout << std::dec // switch back to decimal from hex
-                    << static_cast<int>(ipv4head.source_addr[0]) << "."
-                    << static_cast<int>(ipv4head.source_addr[1]) << "."
-                    << static_cast<int>(ipv4head.source_addr[2]) << "."
-                    << static_cast<int>(ipv4head.source_addr[3]);
-            std::cout << "\t\t";
-            std::cout << std::dec // switch back to decimal from hex
-                    << static_cast<int>(ipv4head.dest_addr[0]) << "."
-                    << static_cast<int>(ipv4head.dest_addr[1]) << "."
-                    << static_cast<int>(ipv4head.dest_addr[2]) << "."
-                    << static_cast<int>(ipv4head.dest_addr[3]);
-            std::cout << std::endl;
-        } else if (ntohs(p_header->type) == 0x86DD) {
-            std::cout << " Type: " << "IPV6" << std::endl;
-        }
+        newpacket.mac_dest = QString::asprintf("%02X:%02X:%02X:%02X:%02x:%02X", p_header->MAC_DEST[0],
+                                               p_header->MAC_DEST[1], p_header->MAC_DEST[2], p_header->MAC_DEST[3],
+                                               p_header->MAC_DEST[4], p_header->MAC_DEST[5]);
 
+        newpacket.mac_src = QString::asprintf("%02X:%02X:%02X:%02X:%02x:%02X", p_header->MAC_SRC[0],
+                                              p_header->MAC_SRC[1], p_header->MAC_SRC[2], p_header->MAC_SRC[3],
+                                              p_header->MAC_SRC[4], p_header->MAC_SRC[5]);
+
+        if (ntohs(p_header->type) == 0x0800) {
+            //checking if the packet is type ipv4
+            //ipv4 packet parsing starts here
+            handle_ipv4packet(newpacket, pkt_data);
+        } else if (ntohs(p_header->type) == 0x86DD) {
+            newpacket.int_type = "IPV6";
+        }
     }
 };
 
 int main() {
-    auto* selected_device = Socket::selectdev();
+    auto *selected_device = Socket::selectdev();
     Socket::printpackets(selected_device);
 }
