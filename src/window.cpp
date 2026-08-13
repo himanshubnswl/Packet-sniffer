@@ -1,51 +1,62 @@
 #include "window.hpp"
 
-QStandardItemModel* Window::initializecheckbox(QObject* parent) {
-    auto* model = new QStandardItemModel(parent);
-    model->appendRow(makeitem(QString{"mac src"}));
-    model->appendRow(makeitem(QString{"mac dest"}));
-    model->appendRow(makeitem(QString{"internet type"}));
-    model->appendRow(makeitem(QString{"protocol"}));
-    model->appendRow(makeitem(QString{"ipv4 src"}));
-    model->appendRow(makeitem(QString{"ipv4 dest"}));
-    return model;
+
+CheckboxModel::CheckboxModel(QWidget *parent) : QComboBox(parent) {
+    //add initialization of model_box in the construction
+    model_box = new QStandardItemModel(this);
+    model_box->appendRow(makeitem(QString{"mac src"}, 0));
+    model_box->appendRow(makeitem(QString{"mac dest"}, 1));
+    model_box->appendRow(makeitem(QString{"internet type"}, 2));
+    model_box->appendRow(makeitem(QString{"protocol"}, 3));
+    model_box->appendRow(makeitem(QString{"ipv4 src"}, 4));
+    model_box->appendRow(makeitem(QString{"ipv4 dest"}, 5));
+    this->QComboBox::setModel(model_box);
+    connect(model_box, &QStandardItemModel::itemChanged, this, &CheckboxModel::itemchangedmodel);
 }
 
-QStringList Window::returncheckeditems(QStandardItemModel* model) {
+QStringList CheckboxModel::returncheckeditems(QStandardItemModel *model) {
     QStringList item_checked;
 
-    for (int i {0}; i < model->rowCount(); i++) {
-        auto* item = model->item(i);
+    for (int i{0}; i < model->rowCount(); i++) {
+        auto *item = model->item(i);
         if (item->data(Qt::CheckStateRole) == Qt::Checked) {
             item_checked.append(item->text());
         }
     }
+    return item_checked;
 }
 
-inline QStandardItem* Window::makeitem(const QString& text) {
-    auto* newitem = new QStandardItem(text);
+inline QStandardItem *CheckboxModel::makeitem(const QString &text, int id) {
+    auto *newitem = new QStandardItem(text);
     newitem->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
     newitem->setData(Qt::Checked, Qt::CheckStateRole);
-
+    newitem->setData(id, Qt::UserRole);
     return newitem;
 }
 
+void Window::onitemchange(const QStandardItem *item) {
+    auto id = item->data(Qt::UserRole);
+    if (item->data(Qt::CheckStateRole) == Qt::Unchecked) {
+        view->hideColumn(id.toInt());
+    }else {
+        view->showColumn(id.toInt());
+    }
+}
 
-Window::Window(QWidget* parent) {
-    auto* model = new MyModel(this);
-    auto* layout = new QVBoxLayout(this);
-    auto* view = new QTableView(this);
+Window::Window(QWidget *parent) {
+    auto *model_checkbox = new CheckboxModel(this);
 
-    auto example = model->give_example();
+    auto *model = new MyModel(this);
+    auto *layout = new QVBoxLayout(this);
+    view = new QTableView(this);
 
-    QComboBox* box = new QComboBox(this);
-    auto* model_for_box = initializecheckbox(this);
-    box->setModel(model_for_box);
+    auto example = MyModel::give_example();
     model->add_packet(example);
-    layout->addWidget(box);
+    layout->addWidget(model_checkbox);
     layout->addWidget(view);
 
+    connect(model_checkbox, &CheckboxModel::itemchangedmodel, this, &Window::onitemchange);
     view->setModel(model);
     view->verticalHeader()->hide();
-    resize(800,800);
+    resize(800, 800);
 }

@@ -71,5 +71,5 @@ QVariant MyModel::headerData(int section, Qt::Orientation orientation, int role)
             case 5: return "ipv4 dest";
         }
     }
-    return QVariant();
+    return {};
 }
