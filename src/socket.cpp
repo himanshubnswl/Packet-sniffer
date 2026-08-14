@@ -6,7 +6,7 @@
 
 namespace Socket {
 
-    MyModel mymodel;
+    const MyModel* mymodel;
     struct header_type {
         uint8_t MAC_DEST[6];
         uint8_t MAC_SRC[6];
@@ -24,10 +24,6 @@ namespace Socket {
             memcpy(dest_addr, pkt + 16, 4);
         }
     };
-
-    void setmodelinstance(MyModel model) {
-        mymodel = model;
-    }
 
     pcap_if_t *getdevicelist() {
         pcap_if_t *alldevs;
@@ -82,7 +78,7 @@ namespace Socket {
         return selected_device;
     }
 
-    int printpackets(pcap_if_t *dev) {
+    int printpackets(pcap_if_t *dev, MyModel* model) {
         pcap_t *adhandle{nullptr};
         char errbuf[PCAP_ERRBUF_SIZE];
 
@@ -93,7 +89,7 @@ namespace Socket {
 
         std::cout << "listening on " << dev->description << std::endl;
         std::cout << "MAC_DEST\t\t MAC_SRC\t\t TYPE\t\t PROTOCOL\t\t IP_SRC\t\t IP_DEST" << std::endl;
-        pcap_loop(adhandle, 0, packet_handler, nullptr);
+        pcap_loop(adhandle, 0, packet_handler, reinterpret_cast<uchar*>(model));
 
         return 0;
     }
@@ -135,6 +131,7 @@ namespace Socket {
     void packet_handler(u_char *param,
                         const struct pcap_pkthdr *header,
                         const u_char *pkt_data) {
+        MyModel* model = reinterpret_cast<MyModel*>(param);
         const auto *p_header = reinterpret_cast<const header_type*>(pkt_data);
         packet_info newpacket;
         /* convert the timestamp to readable format */
@@ -153,10 +150,6 @@ namespace Socket {
         } else if (ntohs(p_header->type) == 0x86DD) {
             newpacket.int_type = "IPV6";
         }
+        emit model->newpacketready(newpacket);
     }
 };
-
-int main() {
-    auto *selected_device = Socket::selectdev();
-    Socket::printpackets(selected_device);
-}

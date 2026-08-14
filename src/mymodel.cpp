@@ -4,7 +4,9 @@
 
 #include "mymodel.hpp"
 
-MyModel::MyModel(QObject* parent) : QAbstractTableModel(parent){}
+MyModel::MyModel(QObject* parent) : QAbstractTableModel(parent) {
+    connect(this, &MyModel::newpacketready, this, &MyModel::add_packet);
+}
 
 int MyModel::rowCount(const QModelIndex &parent) const{
     return data_array.size();

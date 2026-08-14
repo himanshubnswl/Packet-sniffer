@@ -41,6 +41,7 @@ private:
     QTableView *view;
 
 public:
+    MyModel* model;
     explicit Window(QWidget *parent = nullptr);
 
 private slots:

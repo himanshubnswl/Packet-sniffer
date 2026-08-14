@@ -46,15 +46,14 @@ void Window::onitemchange(const QStandardItem *item) {
 Window::Window(QWidget *parent) {
     auto *model_checkbox = new CheckboxModel(this);
 
-    auto *model = new MyModel(this);
+    model = new MyModel(this);
     auto *layout = new QVBoxLayout(this);
     view = new QTableView(this);
 
     auto example = MyModel::give_example();
-    model->add_packet(example);
     layout->addWidget(model_checkbox);
     layout->addWidget(view);
-
+    model->add_packet(example);
     connect(model_checkbox, &CheckboxModel::itemchangedmodel, this, &Window::onitemchange);
     view->setModel(model);
     view->verticalHeader()->hide();

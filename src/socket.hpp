@@ -10,7 +10,7 @@ namespace Socket {
 
     pcap_if_t *getdevicelist();
 
-    int printpackets(pcap_if_t *dev);
+    int printpackets(pcap_if_t *dev, MyModel* model);
 
     void packet_handler(u_char *param,
                         const struct pcap_pkthdr *header,

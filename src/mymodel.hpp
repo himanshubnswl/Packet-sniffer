@@ -14,6 +14,8 @@ struct packet_info {
 class MyModel final : public QAbstractTableModel {
     Q_OBJECT
     std::vector<packet_info> data_array;
+    signals:
+         void newpacketready(const packet_info& newpacket);
 public:
     explicit MyModel(QObject* parent = nullptr);
 

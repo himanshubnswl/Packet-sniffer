@@ -12,14 +12,19 @@ include_directories(${NPCAP_DIR}/Include)
 link_directories(${NPCAP_DIR}/Lib/x64)
 
 ##change the way i add paths in the source varaible
-set(Sources src/window.cpp src/mymodel.cpp src/socket.cpp)
+set(Sources
+        src/gui.cpp
+        src/window.cpp
+        src/mymodel.cpp
+        src/socket.cpp
+)
 
 qt_add_executable(gui ${Sources})
 target_link_libraries(gui PRIVATE Qt6::Widgets wpcap Packet ws2_32)
 
 set_target_properties(gui PROPERTIES
         MACOSX_BUNDLE TRUE
-        WIN32_EXECUTABLE TRUE
+        WIN32_EXECUTABLE FALSE
 )
 
 install(TARGETS gui
