@@ -57,7 +57,8 @@ void MyModel::add_packet(const packet_info& packet) {
 
     beginInsertRows(QModelIndex(), newindex, newindex);
 
-    data_array.push_back(packet);
+    // data_array.push_back(packet);
+    data_array.insert(data_array.begin(), packet);
 
     endInsertRows();
 }
