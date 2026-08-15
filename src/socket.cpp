@@ -4,6 +4,8 @@
 
 #include "socket.hpp"
 
+#include <stop_token>
+
 namespace Socket {
 
     const MyModel* mymodel;
@@ -77,7 +79,7 @@ namespace Socket {
         return selected_device;
     }
 
-    int printpackets(pcap_if_t *dev, MyModel* model) {
+    int printpackets(pcap_if_t *dev, MyModel* model, std::stop_token& stop_token) {
         pcap_t *adhandle{nullptr};
         char errbuf[PCAP_ERRBUF_SIZE];
 
@@ -93,15 +95,28 @@ namespace Socket {
             std::cerr << "some bad shit happened";
             return -1;
         }
+        std::cout << "listening on " << dev->description << std::endl;
+
+
+        pcap_pkthdr* header {nullptr};
+        const uchar* pkt_data{nullptr};
+
+        while (!stop_token.stop_requested()) {
+            int stat = pcap_next_ex(adhandle, &header, &pkt_data);
+            if (stat == 1) {
+                packet_handler(reinterpret_cast<uchar *>(model), header, pkt_data);
+            } else if (stat == -1) {
+                break;
+            }
+        }
         //
         // if ((adhandle = pcap_open(dev->name, 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, nullptr, errbuf)) == nullptr) {
         //     std::cerr << "unable to open device!";
         //     return -1;
         // }
 
-        std::cout << "listening on " << dev->description << std::endl;
-        pcap_loop(adhandle, 0, packet_handler, reinterpret_cast<uchar*>(model));
-
+        // pcap_loop(adhandle, 0, packet_handler, reinterpret_cast<uchar*>(model));
+        pcap_close(adhandle);
         return 0;
     }
 
