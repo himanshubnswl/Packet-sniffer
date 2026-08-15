@@ -55,6 +55,7 @@ Window::Window(QWidget *parent) {
     layout->addWidget(view);
     model->add_packet(example);
     connect(model_checkbox, &CheckboxModel::itemchangedmodel, this, &Window::onitemchange);
+
     view->setModel(model);
     view->verticalHeader()->hide();
     resize(800, 800);

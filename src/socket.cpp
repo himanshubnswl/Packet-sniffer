@@ -30,7 +30,7 @@ namespace Socket {
         int i = 0;
         char errbuf[PCAP_ERRBUF_SIZE];
 
-        if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, nullptr, &alldevs, errbuf) == -1) {
+        if (pcap_findalldevs(&alldevs, errbuf) == -1) {
             std::cerr << "cannot get device list" << std::endl;
             std::exit(0);
         }
@@ -49,8 +49,8 @@ namespace Socket {
         return alldevs;
     }
 
-    pcap_if_t *selectdev() {
-        auto *alldevs = getdevicelist();
+    pcap_if_t *selectdev(pcap_if_t* alldevs) {
+        alldevs = getdevicelist();
         std::cout << "select the device{use number}: ";
         int device{0};
         std::cin >> device;
@@ -74,7 +74,6 @@ namespace Socket {
             pcap_freealldevs(alldevs);
             std::exit(0);
         }
-        // pcap_freealldevs(alldevs);
         return selected_device;
     }
 
@@ -82,13 +81,25 @@ namespace Socket {
         pcap_t *adhandle{nullptr};
         char errbuf[PCAP_ERRBUF_SIZE];
 
-        if ((adhandle = pcap_open(dev->name, 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, nullptr, errbuf)) == nullptr) {
-            std::cerr << "unable to open device!";
+        if ((adhandle = pcap_create(dev->name, errbuf)) == nullptr) {
+            std::cerr << errbuf;
             return -1;
         }
 
+        pcap_set_promisc(adhandle, 1);
+        pcap_set_snaplen(adhandle, 65536);
+        pcap_set_timeout(adhandle ,1000);
+        if (pcap_activate(adhandle)) {
+            std::cerr << "some bad shit happened";
+            return -1;
+        }
+        //
+        // if ((adhandle = pcap_open(dev->name, 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, nullptr, errbuf)) == nullptr) {
+        //     std::cerr << "unable to open device!";
+        //     return -1;
+        // }
+
         std::cout << "listening on " << dev->description << std::endl;
-        std::cout << "MAC_DEST\t\t MAC_SRC\t\t TYPE\t\t PROTOCOL\t\t IP_SRC\t\t IP_DEST" << std::endl;
         pcap_loop(adhandle, 0, packet_handler, reinterpret_cast<uchar*>(model));
 
         return 0;

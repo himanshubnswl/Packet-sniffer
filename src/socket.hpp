@@ -6,7 +6,7 @@
 #include "mymodel.hpp"
 
 namespace Socket {
-    pcap_if_t *selectdev();
+    pcap_if_t *selectdev(pcap_if_t* alldevs);
 
     pcap_if_t *getdevicelist();
 
