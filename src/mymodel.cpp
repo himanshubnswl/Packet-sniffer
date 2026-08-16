@@ -13,7 +13,7 @@ int MyModel::rowCount(const QModelIndex &parent) const{
 }
 
 int MyModel::columnCount(const QModelIndex &parent) const {
-    return 6;
+    return 8;
 }
 
 packet_info MyModel::give_example() {
@@ -45,6 +45,8 @@ QVariant MyModel::data(const QModelIndex &index, int role) const {
                 return packet.ip4_src;
             case 5:
                 return packet.ip4_dest;
+            case 6:
+                return packet.timestamp;
             default:
                 break;
         }
@@ -72,6 +74,7 @@ QVariant MyModel::headerData(int section, Qt::Orientation orientation, int role)
             case 3: return "protocol";
             case 4: return "ipv4 source";
             case 5: return "ipv4 dest";
+            case 6: return "timestamp";
             default: break;
         }
     }

@@ -158,6 +158,7 @@ namespace Socket {
                         const struct pcap_pkthdr *header,
                         const u_char *pkt_data) {
         MyModel* model = reinterpret_cast<MyModel*>(param);
+
         const auto *p_header = reinterpret_cast<const header_type*>(pkt_data);
         packet_info newpacket;
         /* convert the timestamp to readable format */
@@ -169,13 +170,28 @@ namespace Socket {
                                               p_header->MAC_SRC[1], p_header->MAC_SRC[2], p_header->MAC_SRC[3],
                                               p_header->MAC_SRC[4], p_header->MAC_SRC[5]);
 
-        if (ntohs(p_header->type) == 0x0800) {
-            //checking if the packet is type ipv4
-            //ipv4 packet parsing starts here
-            handle_ipv4packet(newpacket, pkt_data);
-        } else if (ntohs(p_header->type) == 0x86DD) {
-            newpacket.int_type = "IPV6";
+        newpacket.timestamp = QString::asprintf("%d:%d", header->ts.tv_sec, header->ts.tv_usec);
+
+        auto ether_type = ntohs(p_header->type);
+        switch(ether_type) {
+            case 0x0800:
+                handle_ipv4packet(newpacket, pkt_data);
+                break;
+            case 0x86DD:
+                newpacket.int_type = "IPV6";
+                break;
+            case 0x0806:
+                newpacket.int_type = "ARP";
+                break;
+            default: ;
         }
+        // if (ether_type == 0x0800) {
+        //     //checking if the packet is type ipv4
+        //     //ipv4 packet parsing starts here
+        //     handle_ipv4packet(newpacket, pkt_data);
+        // } else if (ether_type == 0x86DD) {
+        //     newpacket.int_type = "IPV6";
+        // } else if ()
         emit model->newpacketready(newpacket);
     }
 };
