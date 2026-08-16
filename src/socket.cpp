@@ -81,7 +81,7 @@ namespace Socket {
 
     int printpackets(pcap_if_t *dev, MyModel *model, std::stop_token &stop_token) {
         static u_int64 totalpacketcount{0};
-        static timeval reference;
+        static timeval referencetime;
 
         pcap_t *adhandle{nullptr};
         char errbuf[PCAP_ERRBUF_SIZE];
@@ -107,6 +107,9 @@ namespace Socket {
         while (!stop_token.stop_requested()) {
             int stat = pcap_next_ex(adhandle, &header, &pkt_data);
             if (stat == 1) {
+                if (totalpacketcount == 0) {
+                    referencetime = header->ts;
+                }
                 packet_handler(reinterpret_cast<uchar *>(model), header, pkt_data);
                 totalpacketcount++;
             } else if (stat == -1) {
