@@ -110,7 +110,7 @@ namespace Socket {
                 if (totalpacketcount == 0) {
                     referencetime = header->ts;
                 }
-                packet_handler(reinterpret_cast<uchar *>(model), header, pkt_data);
+                packet_handler(reinterpret_cast<uchar *>(model), header, pkt_data, referencetime);
                 totalpacketcount++;
             } else if (stat == -1) {
                 break;
@@ -163,7 +163,7 @@ namespace Socket {
 
     void packet_handler(u_char *param,
                         const struct pcap_pkthdr *header,
-                        const u_char *pkt_data) {
+                        const u_char *pkt_data, const timeval referencetime) {
         MyModel *model = reinterpret_cast<MyModel *>(param);
 
         const auto *p_header = reinterpret_cast<const header_type *>(pkt_data);
@@ -177,8 +177,8 @@ namespace Socket {
                                               p_header->MAC_SRC[1], p_header->MAC_SRC[2], p_header->MAC_SRC[3],
                                               p_header->MAC_SRC[4], p_header->MAC_SRC[5]);
 
-        newpacket.timestamp = QString::asprintf("%d:%d:%d:%d", header->ts.tv_sec / 3600, header->ts.tv_sec / 60,
-                                                header->ts.tv_usec);
+        newpacket.timestamp = QString::asprintf("%d:%d", header->ts.tv_sec - referencetime.tv_sec,
+                                                header->ts.tv_usec - referencetime.tv_usec);
 
         auto ether_type = ntohs(p_header->type);
         switch (ether_type) {
