@@ -7,8 +7,8 @@
 #include <stop_token>
 
 namespace Socket {
+    const MyModel *mymodel;
 
-    const MyModel* mymodel;
     struct header_type {
         uint8_t MAC_DEST[6];
         uint8_t MAC_SRC[6];
@@ -51,7 +51,7 @@ namespace Socket {
         return alldevs;
     }
 
-    pcap_if_t *selectdev(pcap_if_t* alldevs) {
+    pcap_if_t *selectdev(pcap_if_t *alldevs) {
         alldevs = getdevicelist();
         std::cout << "select the device{use number}: ";
         int device{0};
@@ -79,7 +79,10 @@ namespace Socket {
         return selected_device;
     }
 
-    int printpackets(pcap_if_t *dev, MyModel* model, std::stop_token& stop_token) {
+    int printpackets(pcap_if_t *dev, MyModel *model, std::stop_token &stop_token) {
+        static u_int64 totalpacketcount{0};
+        static timeval reference;
+
         pcap_t *adhandle{nullptr};
         char errbuf[PCAP_ERRBUF_SIZE];
 
@@ -90,7 +93,7 @@ namespace Socket {
 
         pcap_set_promisc(adhandle, 1);
         pcap_set_snaplen(adhandle, 65536);
-        pcap_set_timeout(adhandle ,1000);
+        pcap_set_timeout(adhandle, 1000);
         if (pcap_activate(adhandle)) {
             std::cerr << "some bad shit happened";
             return -1;
@@ -98,13 +101,14 @@ namespace Socket {
         std::cout << "listening on " << dev->description << std::endl;
 
 
-        pcap_pkthdr* header {nullptr};
-        const uchar* pkt_data{nullptr};
+        pcap_pkthdr *header{nullptr};
+        const uchar *pkt_data{nullptr};
 
         while (!stop_token.stop_requested()) {
             int stat = pcap_next_ex(adhandle, &header, &pkt_data);
             if (stat == 1) {
                 packet_handler(reinterpret_cast<uchar *>(model), header, pkt_data);
+                totalpacketcount++;
             } else if (stat == -1) {
                 break;
             }
@@ -120,7 +124,7 @@ namespace Socket {
         return 0;
     }
 
-    void handle_ipv4packet(packet_info& newpacket, const uchar* pkt_data) {
+    void handle_ipv4packet(packet_info &newpacket, const uchar *pkt_data) {
         newpacket.int_type = "IPV4";
         ipv4_header ipv4head(pkt_data + 14);
         switch (ipv4head.protocol) {
@@ -151,15 +155,15 @@ namespace Socket {
                                               ipv4head.source_addr[2], ipv4head.source_addr[3]);
 
         newpacket.ip4_dest = QString::asprintf("%d.%d.%d.%d", ipv4head.dest_addr[0], ipv4head.dest_addr[1],
-                                              ipv4head.dest_addr[2], ipv4head.dest_addr[3]);
+                                               ipv4head.dest_addr[2], ipv4head.dest_addr[3]);
     }
 
     void packet_handler(u_char *param,
                         const struct pcap_pkthdr *header,
                         const u_char *pkt_data) {
-        MyModel* model = reinterpret_cast<MyModel*>(param);
+        MyModel *model = reinterpret_cast<MyModel *>(param);
 
-        const auto *p_header = reinterpret_cast<const header_type*>(pkt_data);
+        const auto *p_header = reinterpret_cast<const header_type *>(pkt_data);
         packet_info newpacket;
         /* convert the timestamp to readable format */
         newpacket.mac_dest = QString::asprintf("%02X:%02X:%02X:%02X:%02x:%02X", p_header->MAC_DEST[0],
@@ -170,10 +174,11 @@ namespace Socket {
                                               p_header->MAC_SRC[1], p_header->MAC_SRC[2], p_header->MAC_SRC[3],
                                               p_header->MAC_SRC[4], p_header->MAC_SRC[5]);
 
-        newpacket.timestamp = QString::asprintf("%d:%d", header->ts.tv_sec, header->ts.tv_usec);
+        newpacket.timestamp = QString::asprintf("%d:%d:%d:%d", header->ts.tv_sec / 3600, header->ts.tv_sec / 60,
+                                                header->ts.tv_usec);
 
         auto ether_type = ntohs(p_header->type);
-        switch(ether_type) {
+        switch (ether_type) {
             case 0x0800:
                 handle_ipv4packet(newpacket, pkt_data);
                 break;
