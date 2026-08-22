@@ -178,7 +178,7 @@ namespace Socket {
                                               p_header->MAC_SRC[4], p_header->MAC_SRC[5]);
 
         newpacket.timestamp = QString::asprintf("%d:%d", header->ts.tv_sec - referencetime.tv_sec,
-                                                header->ts.tv_usec - referencetime.tv_usec);
+                                                (header->ts.tv_usec - referencetime.tv_usec)/1000 );
 
         auto ether_type = ntohs(p_header->type);
         switch (ether_type) {
