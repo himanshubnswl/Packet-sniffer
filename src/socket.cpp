@@ -20,7 +20,7 @@ namespace Socket {
         uint8_t source_addr[4];
         uint8_t dest_addr[4];
 
-        ipv4_header(const u_char *pkt) {
+        explicit ipv4_header(const u_char *pkt) {
             protocol = pkt[9];
             memcpy(source_addr, pkt + 12, 4);
             memcpy(dest_addr, pkt + 16, 4);
@@ -81,8 +81,7 @@ namespace Socket {
 
     int printpackets(pcap_if_t *dev, MyModel *model, std::stop_token &stop_token) {
         static u_int64 totalpacketcount{0};
-        static timeval referencetime;
-
+        static u_int64 referencetime{0};
         pcap_t *adhandle{nullptr};
         char errbuf[PCAP_ERRBUF_SIZE];
 
@@ -108,7 +107,7 @@ namespace Socket {
             int stat = pcap_next_ex(adhandle, &header, &pkt_data);
             if (stat == 1) {
                 if (totalpacketcount == 0) {
-                    referencetime = header->ts;
+                    referencetime = (static_cast<u_int64>(header->ts.tv_sec) * 1'000'000) + header->ts.tv_usec;
                 }
                 packet_handler(reinterpret_cast<uchar *>(model), header, pkt_data, referencetime);
                 totalpacketcount++;
@@ -116,13 +115,6 @@ namespace Socket {
                 break;
             }
         }
-        //
-        // if ((adhandle = pcap_open(dev->name, 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, nullptr, errbuf)) == nullptr) {
-        //     std::cerr << "unable to open device!";
-        //     return -1;
-        // }
-
-        // pcap_loop(adhandle, 0, packet_handler, reinterpret_cast<uchar*>(model));
         pcap_close(adhandle);
         return 0;
     }
@@ -163,12 +155,11 @@ namespace Socket {
 
     void packet_handler(u_char *param,
                         const struct pcap_pkthdr *header,
-                        const u_char *pkt_data, const timeval referencetime) {
-        MyModel *model = reinterpret_cast<MyModel *>(param);
+                        const u_char *pkt_data, const u_int64 referencetime) {
+        auto *model = reinterpret_cast<MyModel *>(param);
 
         const auto *p_header = reinterpret_cast<const header_type *>(pkt_data);
         packet_info newpacket;
-        /* convert the timestamp to readable format */
         newpacket.mac_dest = QString::asprintf("%02X:%02X:%02X:%02X:%02x:%02X", p_header->MAC_DEST[0],
                                                p_header->MAC_DEST[1], p_header->MAC_DEST[2], p_header->MAC_DEST[3],
                                                p_header->MAC_DEST[4], p_header->MAC_DEST[5]);
@@ -177,8 +168,9 @@ namespace Socket {
                                               p_header->MAC_SRC[1], p_header->MAC_SRC[2], p_header->MAC_SRC[3],
                                               p_header->MAC_SRC[4], p_header->MAC_SRC[5]);
 
-        newpacket.timestamp = QString::asprintf("%d:%d", header->ts.tv_sec - referencetime.tv_sec,
-                                                (header->ts.tv_usec - referencetime.tv_usec)/1000 );
+        long double currenttime = (static_cast<long double>(header->ts.tv_sec) * 1'000'000) + header->ts.tv_usec;
+        currenttime = (currenttime - referencetime) / 1'000'000.00;
+        newpacket.timestamp = QString::number(currenttime, 'f', 6);
 
         auto ether_type = ntohs(p_header->type);
         switch (ether_type) {
@@ -193,13 +185,6 @@ namespace Socket {
                 break;
             default: ;
         }
-        // if (ether_type == 0x0800) {
-        //     //checking if the packet is type ipv4
-        //     //ipv4 packet parsing starts here
-        //     handle_ipv4packet(newpacket, pkt_data);
-        // } else if (ether_type == 0x86DD) {
-        //     newpacket.int_type = "IPV6";
-        // } else if ()
         emit model->newpacketready(newpacket);
     }
 };

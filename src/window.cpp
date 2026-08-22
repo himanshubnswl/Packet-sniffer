@@ -51,10 +51,8 @@ Window::Window(QWidget *parent) {
     auto *layout = new QVBoxLayout(this);
     view = new QTableView(this);
 
-    auto example = MyModel::give_example();
     layout->addWidget(model_checkbox);
     layout->addWidget(view);
-    model->add_packet(example);
     connect(model_checkbox, &CheckboxModel::itemchangedmodel, this, &Window::onitemchange);
 
     view->setModel(model);
