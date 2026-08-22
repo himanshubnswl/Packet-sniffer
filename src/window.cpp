@@ -57,5 +57,5 @@ Window::Window(QWidget *parent) {
 
     view->setModel(model);
     view->verticalHeader()->hide();
-    resize(800, 800);
+    resize(1000, 800);
 }

@@ -34,19 +34,22 @@ QVariant MyModel::data(const QModelIndex &index, int role) const {
 
         switch (index.column()) {
             case 0:
-                return packet.mac_src;
+                return packet.packet_number;
             case 1:
-                return packet.mac_dest;
-            case 2:
-                return packet.int_type;
-            case 3:
-                return packet.protocol;
-            case 4:
-                return packet.ip4_src;
-            case 5:
-                return packet.ip4_dest;
-            case 6:
                 return packet.timestamp;
+            case 2:
+                return packet.mac_src;
+            case 3:
+                return packet.mac_dest;
+            case 4:
+                return packet.int_type;
+            case 5:
+                return packet.protocol;
+            case 6:
+                return packet.ip4_src;
+            case 7:
+                return packet.ip4_dest;
+
             default:
                 break;
         }
@@ -68,13 +71,14 @@ void MyModel::add_packet(const packet_info& packet) {
 QVariant MyModel::headerData(int section, Qt::Orientation orientation, int role) const{
     if (role == Qt::DisplayRole) {
         switch (section) {
-            case 0: return "mac src";
-            case 1: return "mac dest";
-            case 2: return "internet type";
-            case 3: return "protocol";
-            case 4: return "ipv4 source";
-            case 5: return "ipv4 dest";
-            case 6: return "timestamp";
+            case 0: return "packet no.";
+            case 1: return "timestamp";
+            case 2: return "mac src";
+            case 3: return "mac dest";
+            case 4: return "internet type";
+            case 5: return "protocol";
+            case 6: return "ipv4 source";
+            case 7: return "ipv4 dest";
             default: break;
         }
     }

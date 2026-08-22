@@ -82,9 +82,9 @@ namespace Socket {
     int printpackets(pcap_if_t *dev, MyModel *model, std::stop_token &stop_token) {
         static u_int64 totalpacketcount{0};
         static u_int64 referencetime{0};
+
         pcap_t *adhandle{nullptr};
         char errbuf[PCAP_ERRBUF_SIZE];
-
         if ((adhandle = pcap_create(dev->name, errbuf)) == nullptr) {
             std::cerr << errbuf;
             return -1;
@@ -99,7 +99,6 @@ namespace Socket {
         }
         std::cout << "listening on " << dev->description << std::endl;
 
-
         pcap_pkthdr *header{nullptr};
         const uchar *pkt_data{nullptr};
 
@@ -109,7 +108,7 @@ namespace Socket {
                 if (totalpacketcount == 0) {
                     referencetime = (static_cast<u_int64>(header->ts.tv_sec) * 1'000'000) + header->ts.tv_usec;
                 }
-                packet_handler(reinterpret_cast<uchar *>(model), header, pkt_data, referencetime);
+                packet_handler(reinterpret_cast<uchar *>(model), header, pkt_data, referencetime, totalpacketcount);
                 totalpacketcount++;
             } else if (stat == -1) {
                 break;
@@ -155,7 +154,7 @@ namespace Socket {
 
     void packet_handler(u_char *param,
                         const struct pcap_pkthdr *header,
-                        const u_char *pkt_data, const u_int64 referencetime) {
+                        const u_char *pkt_data, const u_int64 referencetime, const u_int64 packetcount) {
         auto *model = reinterpret_cast<MyModel *>(param);
 
         const auto *p_header = reinterpret_cast<const header_type *>(pkt_data);
@@ -171,6 +170,7 @@ namespace Socket {
         long double currenttime = (static_cast<long double>(header->ts.tv_sec) * 1'000'000) + header->ts.tv_usec;
         currenttime = (currenttime - referencetime) / 1'000'000.00;
         newpacket.timestamp = QString::number(currenttime, 'f', 6);
+        newpacket.packet_number = packetcount;
 
         auto ether_type = ntohs(p_header->type);
         switch (ether_type) {
