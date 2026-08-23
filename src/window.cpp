@@ -4,13 +4,14 @@
 CheckboxModel::CheckboxModel(QWidget *parent) : QComboBox(parent) {
     //add initialization of model_box in the construction
     model_box = new QStandardItemModel(this);
-    model_box->appendRow(makeitem(QString{"mac src"}, 0));
-    model_box->appendRow(makeitem(QString{"mac dest"}, 1));
-    model_box->appendRow(makeitem(QString{"internet type"}, 2));
-    model_box->appendRow(makeitem(QString{"protocol"}, 3));
-    model_box->appendRow(makeitem(QString{"ipv4 src"}, 4));
-    model_box->appendRow(makeitem(QString{"ipv4 dest"}, 5));
-    model_box->appendRow(makeitem(QString{"timestamp"},6));
+    model_box->appendRow(makeitem(QString{"packet no."}, 0));
+    model_box->appendRow(makeitem(QString{"timestamp"},1));
+    model_box->appendRow(makeitem(QString{"mac src"}, 2));
+    model_box->appendRow(makeitem(QString{"mac dest"}, 3));
+    model_box->appendRow(makeitem(QString{"internet type"}, 4));
+    model_box->appendRow(makeitem(QString{"protocol"}, 5));
+    model_box->appendRow(makeitem(QString{"ipv4 src"}, 6));
+    model_box->appendRow(makeitem(QString{"ipv4 dest"}, 7));
     this->QComboBox::setModel(model_box);
     connect(model_box, &QStandardItemModel::itemChanged, this, &CheckboxModel::itemchangedmodel);
 }
@@ -53,6 +54,7 @@ Window::Window(QWidget *parent) {
 
     layout->addWidget(model_checkbox);
     layout->addWidget(view);
+    connect(model, &MyModel::newpacketadded, view, &QTableView::scrollToBottom);
     connect(model_checkbox, &CheckboxModel::itemchangedmodel, this, &Window::onitemchange);
 
     view->setModel(model);

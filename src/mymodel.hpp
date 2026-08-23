@@ -20,6 +20,7 @@ class MyModel final : public QAbstractTableModel {
     std::vector<packet_info> data_array;
     signals:
          void newpacketready(const packet_info& newpacket);
+         void newpacketadded();
 public:
     explicit MyModel(QObject* parent = nullptr);
 

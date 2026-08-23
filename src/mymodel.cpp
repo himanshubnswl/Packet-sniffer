@@ -5,6 +5,7 @@
 #include "mymodel.hpp"
 
 MyModel::MyModel(QObject* parent) : QAbstractTableModel(parent) {
+    data_array.reserve(10000);
     connect(this, &MyModel::newpacketready, this, &MyModel::add_packet);
 }
 
@@ -62,8 +63,7 @@ void MyModel::add_packet(const packet_info& packet) {
 
     beginInsertRows(QModelIndex(), newindex, newindex);
 
-    // data_array.push_back(packet);
-    data_array.insert(data_array.begin(), packet);
+    data_array.push_back(packet);
 
     endInsertRows();
 }

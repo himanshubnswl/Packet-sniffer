@@ -186,5 +186,6 @@ namespace Socket {
             default: ;
         }
         emit model->newpacketready(newpacket);
+        emit model->newpacketadded();
     }
 };
