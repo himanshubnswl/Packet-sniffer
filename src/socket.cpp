@@ -120,7 +120,7 @@ namespace Socket {
 
     void handle_ipv4packet(packet_info &newpacket, const uchar *pkt_data) {
         newpacket.int_type = "IPV4";
-        ipv4_header ipv4head(pkt_data + 14);
+        ipv4_header ipv4head(pkt_data);
         switch (ipv4head.protocol) {
             case 1:
                 newpacket.protocol = "ICMP";
@@ -152,6 +152,40 @@ namespace Socket {
                                                ipv4head.dest_addr[2], ipv4head.dest_addr[3]);
     }
 
+    void handle_ARP(packet_info &newpacket, const uchar *pkt_data) {
+        struct ARP_Header {
+            uint16_t htype; // Hardware type (offset 14)
+            uint16_t ptype; // Protocol type (offset 16)
+            uint8_t hlen; // Hardware size (offset 18)
+            uint8_t plen; // Protocol size (offset 19)
+            uint16_t opcode; // Opcode (offset 20)
+            uint8_t sender_mac[6]; // Sender MAC (offset 22)
+            uint8_t sender_ip[4]; // Sender IP (offset 28)
+            uint8_t target_mac[6]; // Target MAC (offset 32)
+            uint8_t target_ip[4]; // Target IP (offset 38)
+        };
+
+        const auto *packet = reinterpret_cast<const ARP_Header *>(pkt_data);
+        if (ntohs(packet->opcode) == 1) {
+            newpacket.protocol = QString{"ARP Request"};
+        } else if (ntohs(packet->opcode) == 2) {
+            newpacket.protocol = QString("ARP Reply");
+        }
+
+        newpacket.mac_src = QString::asprintf("%0X:%0X:%0X:%0X:%0X:%0X", packet->sender_mac[0], packet->sender_mac[1],
+                                              packet->sender_mac[2], packet->sender_mac[3], packet->sender_mac[4],
+                                              packet->sender_mac[5]);
+        newpacket.mac_dest = QString::asprintf("%0X:%0X:%0X:%0X:%0X:%0X", packet->target_mac[0], packet->target_mac[1],
+                                               packet->target_mac[2], packet->target_mac[3], packet->target_mac[4],
+                                               packet->target_mac[5]);
+        newpacket.ip4_src = QString::asprintf("%d.%d.%d.%d", packet->sender_ip[0], packet->sender_ip[1],
+                                              packet->sender_ip[2], packet->sender_ip[3]);
+        newpacket.ip4_dest = QString::asprintf("%d.%d.%d.%d", packet->target_ip[0], packet->target_ip[1],
+                                               packet->target_ip[2], packet->target_ip[3]);
+
+
+    }
+
     void packet_handler(u_char *param,
                         const struct pcap_pkthdr *header,
                         const u_char *pkt_data, const u_int64 referencetime, const u_int64 packetcount) {
@@ -175,7 +209,7 @@ namespace Socket {
         auto ether_type = ntohs(p_header->type);
         switch (ether_type) {
             case 0x0800:
-                handle_ipv4packet(newpacket, pkt_data);
+                handle_ipv4packet(newpacket, pkt_data + 14);
                 break;
             case 0x86DD:
                 newpacket.int_type = "IPV6";
