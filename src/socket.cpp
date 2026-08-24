@@ -166,12 +166,6 @@ namespace Socket {
         };
 
         const auto *packet = reinterpret_cast<const ARP_Header *>(pkt_data);
-        if (ntohs(packet->opcode) == 1) {
-            newpacket.protocol = QString{"ARP Request"};
-        } else if (ntohs(packet->opcode) == 2) {
-            newpacket.protocol = QString("ARP Reply");
-        }
-
         newpacket.mac_src = QString::asprintf("%0X:%0X:%0X:%0X:%0X:%0X", packet->sender_mac[0], packet->sender_mac[1],
                                               packet->sender_mac[2], packet->sender_mac[3], packet->sender_mac[4],
                                               packet->sender_mac[5]);
@@ -183,6 +177,14 @@ namespace Socket {
         newpacket.ip4_dest = QString::asprintf("%d.%d.%d.%d", packet->target_ip[0], packet->target_ip[1],
                                                packet->target_ip[2], packet->target_ip[3]);
 
+
+        if (ntohs(packet->opcode) == 1) {
+            newpacket.protocol = QString{"ARP Request"};
+            newpacket.additional_info = QString("who has the ip addr %1").arg(newpacket.ip4_dest);
+        } else if (ntohs(packet->opcode) == 2) {
+            newpacket.protocol = QString("ARP Reply");
+            newpacket.additional_info = QString("I have %1").arg(newpacket.ip4_src);
+        }
 
     }
 
@@ -216,6 +218,7 @@ namespace Socket {
                 break;
             case 0x0806:
                 newpacket.int_type = "ARP";
+                handle_ARP(newpacket, pkt_data + 14);
                 break;
             default: ;
         }
