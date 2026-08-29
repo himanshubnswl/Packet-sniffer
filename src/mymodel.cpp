@@ -50,7 +50,8 @@ QVariant MyModel::data(const QModelIndex &index, int role) const {
                 return packet.ip4_src;
             case 7:
                 return packet.ip4_dest;
-
+            case 8:
+                return packet.additional_info;
             default:
                 break;
         }
@@ -79,6 +80,7 @@ QVariant MyModel::headerData(int section, Qt::Orientation orientation, int role)
             case 5: return "protocol";
             case 6: return "ipv4 source";
             case 7: return "ipv4 dest";
+            case 8: return "additional info";
             default: break;
         }
     }

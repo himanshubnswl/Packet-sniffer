@@ -12,6 +12,7 @@ CheckboxModel::CheckboxModel(QWidget *parent) : QComboBox(parent) {
     model_box->appendRow(makeitem(QString{"protocol"}, 5));
     model_box->appendRow(makeitem(QString{"ipv4 src"}, 6));
     model_box->appendRow(makeitem(QString{"ipv4 dest"}, 7));
+    model_box->appendRow(makeitem(QString{"additional info"}, 8));
     this->QComboBox::setModel(model_box);
     connect(model_box, &QStandardItemModel::itemChanged, this, &CheckboxModel::itemchangedmodel);
 }
