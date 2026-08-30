@@ -1,0 +1,28 @@
+~~add timestamps when printing packets, make new field and handle it->a little more
+    complex than originally thought, the npcap program captures the timestamps in seconds and
+    microseconds elapsed since 1970, would be a hassle to process it, at this point i am
+    thinking of implementing a wireshark like one where the reference point is the start of the capture
+    and the times of npcap timestamps is subtracted from that reference point~~
+
+
+~~eliminate pcap_loop and use modern method to process packets~~
+~~handle asynchronous elimination of the loop~~
+
+
+~~handle another packets types like arp
+    ~~make new struct
+    ~~make new function to handle arp~~
+
+~~change the oncoming traffic order shown, add new ones at the bottom and not at the top~~
+
+~~add numbering to packets~~
+
+make a complete gui
+    add selection of driver through the gui
+    add error handling on the gui
+
+make it more efficient, currently its slower at showing packets than wireshark, need to make some changes to make it fast
+
+make the ipv4 and ipv6 struct handle and store all the fields of a regular ipv4 and ipv6 packet
+
+
