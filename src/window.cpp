@@ -1,6 +1,6 @@
 #include "window.hpp"
 
-
+//this is the checkbox model, nothing to do with the data handling module
 CheckboxModel::CheckboxModel(QWidget *parent) : QComboBox(parent) {
     //add initialization of model_box in the construction
     model_box = new QStandardItemModel(this);
@@ -17,6 +17,7 @@ CheckboxModel::CheckboxModel(QWidget *parent) : QComboBox(parent) {
     connect(model_box, &QStandardItemModel::itemChanged, this, &CheckboxModel::itemchangedmodel);
 }
 
+//returns the item-list of the items that are highlighted
 QStringList CheckboxModel::returncheckeditems(QStandardItemModel *model) {
     QStringList item_checked;
 
@@ -29,6 +30,7 @@ QStringList CheckboxModel::returncheckeditems(QStandardItemModel *model) {
     return item_checked;
 }
 
+//helper function which makes up a item with standard options set
 inline QStandardItem *CheckboxModel::makeitem(const QString &text, int id) {
     auto *newitem = new QStandardItem(text);
     newitem->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
@@ -37,6 +39,12 @@ inline QStandardItem *CheckboxModel::makeitem(const QString &text, int id) {
     return newitem;
 }
 
+
+//Window Module starts here
+
+
+
+//slot function activated by a signal when item list is altered
 void Window::onitemchange(const QStandardItem *item) {
     auto id = item->data(Qt::UserRole);
     if (item->data(Qt::CheckStateRole) == Qt::Unchecked) {
@@ -45,7 +53,12 @@ void Window::onitemchange(const QStandardItem *item) {
         view->showColumn(id.toInt());
     }
 }
-
+//start the checkboxmodel, start the data handling main model
+//start the layout for the app
+//start a tableview to show the items on display
+//connect the signal packetadded to scroll to bottom
+//connect the signal itemchangemodel to the slot of class Window onitemchange
+//finally set the model of the view
 Window::Window(QWidget *parent) {
     auto *model_checkbox = new CheckboxModel(this);
 
