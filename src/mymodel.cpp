@@ -3,7 +3,15 @@
 //
 
 #include "mymodel.hpp"
-
+/*The Application needs a custom model to handle the incoming packet data
+ * this is because traditional model won't allow and won't be efficient in handling the large amount of incoming
+ * packet. the custom model needs to inherit the QAbstractTableModel and override it's functions which then will be
+ * used by the view to display it on the screen. this is the model/view architecture that qt follows.
+ *
+ * hence rowCount, columnCount, data, headerData have been overridden. there are roles for which a function can be called.
+ * will be following the data role in all of them. function is quried with a index and a item needs be returned for
+ * the given index, QVariant has all kinds of data types.
+ */
 MyModel::MyModel(QObject* parent) : QAbstractTableModel(parent) {
     data_array.reserve(10000);
     connect(this, &MyModel::newpacketready, this, &MyModel::add_packet);
@@ -15,18 +23,6 @@ int MyModel::rowCount(const QModelIndex &parent) const{
 
 int MyModel::columnCount(const QModelIndex &parent) const {
     return 8;
-}
-
-packet_info MyModel::give_example() {
-    packet_info test;
-    test.mac_src = QString{"00:1A:2B:3C:4D:5E"};
-    test.mac_dest = QString{"AA:BB:CC:DD:EE:FF"};
-    test.int_type = QString{"IPV4"};
-    test.protocol = QString{"TCP"};
-    test.ip4_src = QString{"192.168.1.50"};
-    test.ip4_dest = QString{"192.168.1.60"};
-
-    return test;
 }
 
 QVariant MyModel::data(const QModelIndex &index, int role) const {
@@ -85,4 +81,16 @@ QVariant MyModel::headerData(int section, Qt::Orientation orientation, int role)
         }
     }
     return {};
+
+}
+packet_info MyModel::give_example() {
+    packet_info test;
+    test.mac_src = QString{"00:1A:2B:3C:4D:5E"};
+    test.mac_dest = QString{"AA:BB:CC:DD:EE:FF"};
+    test.int_type = QString{"IPV4"};
+    test.protocol = QString{"TCP"};
+    test.ip4_src = QString{"192.168.1.50"};
+    test.ip4_dest = QString{"192.168.1.60"};
+
+    return test;
 }
