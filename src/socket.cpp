@@ -9,12 +9,16 @@
 namespace Socket {
     const MyModel *mymodel;
 
+    //the struct for the ethernet header
     struct header_type {
         uint8_t MAC_DEST[6];
         uint8_t MAC_SRC[6];
+        //type means the internet packet type, IPV4 or IPV6
         uint16_t type;
     };
 
+    //the ipv4 header struct, needs to be changed to incorporate all the fields of the header
+    //and remove the constructor mechanism
     struct ipv4_header {
         uint8_t protocol;
         uint8_t source_addr[4];
@@ -51,6 +55,8 @@ namespace Socket {
         return alldevs;
     }
 
+    //calls getdevicelist internally and returns the selected device
+    //will be changed to accodomate the complete gui
     pcap_if_t *selectdev(pcap_if_t *alldevs) {
         alldevs = getdevicelist();
         std::cout << "select the device{use number}: ";
@@ -79,6 +85,8 @@ namespace Socket {
         return selected_device;
     }
 
+    //starts to print packets by calling a handler function, needs to be passed a device.
+    //custom function to handle the handling of packets
     int printpackets(pcap_if_t *dev, MyModel *model, std::stop_token &stop_token) {
         static u_int64 totalpacketcount{0};
         static u_int64 referencetime{0};
@@ -153,6 +161,7 @@ namespace Socket {
     }
 
     void handle_ARP(packet_info &newpacket, const uchar *pkt_data) {
+        //the arp header struct
         struct ARP_Header {
             uint16_t htype; // Hardware type (offset 14)
             uint16_t ptype; // Protocol type (offset 16)
@@ -168,14 +177,14 @@ namespace Socket {
         const auto *packet = reinterpret_cast<const ARP_Header *>(pkt_data);
         newpacket.mac_src = QString::asprintf("%0X:%0X:%0X:%0X:%0X:%0X", packet->sender_mac[0], packet->sender_mac[1],
                                               packet->sender_mac[2], packet->sender_mac[3], packet->sender_mac[4],
-                                              packet->sender_mac[5]);
+                                              packet->sender_mac[5]);//mac source
         newpacket.mac_dest = QString::asprintf("%0X:%0X:%0X:%0X:%0X:%0X", packet->target_mac[0], packet->target_mac[1],
                                                packet->target_mac[2], packet->target_mac[3], packet->target_mac[4],
-                                               packet->target_mac[5]);
+                                               packet->target_mac[5]);//mac target addr
         newpacket.ip4_src = QString::asprintf("%d.%d.%d.%d", packet->sender_ip[0], packet->sender_ip[1],
-                                              packet->sender_ip[2], packet->sender_ip[3]);
+                                              packet->sender_ip[2], packet->sender_ip[3]);//source ip addr
         newpacket.ip4_dest = QString::asprintf("%d.%d.%d.%d", packet->target_ip[0], packet->target_ip[1],
-                                               packet->target_ip[2], packet->target_ip[3]);
+                                               packet->target_ip[2], packet->target_ip[3]);//the target ip addr
 
 
         if (ntohs(packet->opcode) == 1) {
@@ -188,6 +197,9 @@ namespace Socket {
 
     }
 
+
+    //the main packet handler function, all packets will go through this function and have their mac addresses handled
+    //the packets then get routed to different function depending on the type of packet they are,eg arp, ipv4 etc.
     void packet_handler(u_char *param,
                         const struct pcap_pkthdr *header,
                         const u_char *pkt_data, const u_int64 referencetime, const u_int64 packetcount) {
