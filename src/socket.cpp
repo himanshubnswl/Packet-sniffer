@@ -17,28 +17,6 @@ namespace Socket {
         uint16_t type;
     };
 
-    //the ipv4 header struct, needs to be changed to incorporate all the fields of the header
-    //and remove the constructor mechanism
-    struct ipv4_header {
-        uint8_t version;
-        //always equal to 4 for IPv4, also contains the IHL field, 4-4,IHL specifies the number of 32-bit words in the header
-        uint8_t DSCP_ECN; //specifies differentiated service
-        uint16_t total_lenght;//specifies the entire packet size in bytes, including header and data
-        uint16_t identification;//primarily used for uniquely identifying the group of fragments of a single IP datagram
-        uint16_t flag_fragmentoffset; //fragment bits,later 13 bits specify offset of fragment
-        uint8_t time_to_live;//limits a datagrams lifetime to prevent network failure
-        uint8_t protocol;//protocol encapsulated in the data portion of the ip datagram
-        uint16_t header_checksum;//error checking of header
-        uint8_t source_addr[4];//constains the ip address of the sender of the packet
-        uint8_t dest_addr[4];//ip address of intended receiver
-
-        explicit ipv4_header(const u_char *pkt) {
-            protocol = pkt[9];
-            memcpy(source_addr, pkt + 12, 4);
-            memcpy(dest_addr, pkt + 16, 4);
-        }
-    };
-
     pcap_if_t *getdevicelist() {
         pcap_if_t *alldevs;
         int i = 0;
@@ -135,9 +113,24 @@ namespace Socket {
     }
 
     void handle_ipv4packet(packet_info &newpacket, const uchar *pkt_data) {
-        newpacket.int_type = "IPV4";
-        ipv4_header ipv4head(pkt_data);
-        switch (ipv4head.protocol) {
+        //the ipv4 header struct, needs to be changed to incorporate all the fields of the header
+        //and remove the constructor mechanism
+        struct ipv4_header {
+            uint8_t version;
+            //always equal to 4 for IPv4, also contains the IHL field, 4-4,IHL specifies the number of 32-bit words in the header
+            uint8_t DSCP_ECN; //specifies differentiated service
+            uint16_t total_lenght;//specifies the entire packet size in bytes, including header and data
+            uint16_t identification;//primarily used for uniquely identifying the group of fragments of a single IP datagram
+            uint16_t flag_fragmentoffset; //fragment bits,later 13 bits specify offset of fragment
+            uint8_t time_to_live;//limits a datagrams lifetime to prevent network failure
+            uint8_t protocol;//protocol encapsulated in the data portion of the ip datagram
+            uint16_t header_checksum;//error checking of header
+            uint8_t source_addr[4];//constains the ip address of the sender of the packet
+            uint8_t dest_addr[4];//ip address of intended receiver
+        };
+
+        const auto* ipv4head = reinterpret_cast<const ipv4_header*>(pkt_data);
+        switch (ipv4head->protocol) {
             case 1:
                 newpacket.protocol = "ICMP";
                 break;
@@ -161,11 +154,11 @@ namespace Socket {
                 break;
             default: break;
         }
-        newpacket.ip4_src = QString::asprintf("%d.%d.%d.%d", ipv4head.source_addr[0], ipv4head.source_addr[1],
-                                              ipv4head.source_addr[2], ipv4head.source_addr[3]);
+        newpacket.ip4_src = QString::asprintf("%d.%d.%d.%d", ipv4head->source_addr[0], ipv4head->source_addr[1],
+                                              ipv4head->source_addr[2], ipv4head->source_addr[3]);
 
-        newpacket.ip4_dest = QString::asprintf("%d.%d.%d.%d", ipv4head.dest_addr[0], ipv4head.dest_addr[1],
-                                               ipv4head.dest_addr[2], ipv4head.dest_addr[3]);
+        newpacket.ip4_dest = QString::asprintf("%d.%d.%d.%d", ipv4head->dest_addr[0], ipv4head->dest_addr[1],
+                                               ipv4head->dest_addr[2], ipv4head->dest_addr[3]);
     }
 
     void handle_ARP(packet_info &newpacket, const uchar *pkt_data) {
@@ -230,6 +223,7 @@ namespace Socket {
         auto ether_type = ntohs(p_header->type);
         switch (ether_type) {
             case 0x0800:
+                newpacket.int_type = "IPV4";
                 handle_ipv4packet(newpacket, pkt_data + 14);
                 break;
             case 0x86DD:
