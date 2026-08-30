@@ -22,7 +22,7 @@ int MyModel::rowCount(const QModelIndex &parent) const{
 }
 
 int MyModel::columnCount(const QModelIndex &parent) const {
-    return 8;
+    return 9;
 }
 
 QVariant MyModel::data(const QModelIndex &index, int role) const {
