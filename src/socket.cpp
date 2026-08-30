@@ -20,9 +20,17 @@ namespace Socket {
     //the ipv4 header struct, needs to be changed to incorporate all the fields of the header
     //and remove the constructor mechanism
     struct ipv4_header {
-        uint8_t protocol;
-        uint8_t source_addr[4];
-        uint8_t dest_addr[4];
+        uint8_t version;
+        //always equal to 4 for IPv4, also contains the IHL field, 4-4,IHL specifies the number of 32-bit words in the header
+        uint8_t DSCP_ECN; //specifies differentiated service
+        uint16_t total_lenght;//specifies the entire packet size in bytes, including header and data
+        uint16_t identification;//primarily used for uniquely identifying the group of fragments of a single IP datagram
+        uint16_t flag_fragmentoffset; //fragment bits,later 13 bits specify offset of fragment
+        uint8_t time_to_live;//limits a datagrams lifetime to prevent network failure
+        uint8_t protocol;//protocol encapsulated in the data portion of the ip datagram
+        uint16_t header_checksum;//error checking of header
+        uint8_t source_addr[4];//constains the ip address of the sender of the packet
+        uint8_t dest_addr[4];//ip address of intended receiver
 
         explicit ipv4_header(const u_char *pkt) {
             protocol = pkt[9];
@@ -177,14 +185,14 @@ namespace Socket {
         const auto *packet = reinterpret_cast<const ARP_Header *>(pkt_data);
         newpacket.mac_src = QString::asprintf("%0X:%0X:%0X:%0X:%0X:%0X", packet->sender_mac[0], packet->sender_mac[1],
                                               packet->sender_mac[2], packet->sender_mac[3], packet->sender_mac[4],
-                                              packet->sender_mac[5]);//mac source
+                                              packet->sender_mac[5]); //mac source
         newpacket.mac_dest = QString::asprintf("%0X:%0X:%0X:%0X:%0X:%0X", packet->target_mac[0], packet->target_mac[1],
                                                packet->target_mac[2], packet->target_mac[3], packet->target_mac[4],
-                                               packet->target_mac[5]);//mac target addr
+                                               packet->target_mac[5]); //mac target addr
         newpacket.ip4_src = QString::asprintf("%d.%d.%d.%d", packet->sender_ip[0], packet->sender_ip[1],
-                                              packet->sender_ip[2], packet->sender_ip[3]);//source ip addr
+                                              packet->sender_ip[2], packet->sender_ip[3]); //source ip addr
         newpacket.ip4_dest = QString::asprintf("%d.%d.%d.%d", packet->target_ip[0], packet->target_ip[1],
-                                               packet->target_ip[2], packet->target_ip[3]);//the target ip addr
+                                               packet->target_ip[2], packet->target_ip[3]); //the target ip addr
 
 
         if (ntohs(packet->opcode) == 1) {
@@ -194,7 +202,6 @@ namespace Socket {
             newpacket.protocol = QString("ARP Reply");
             newpacket.additional_info = QString("I have %1").arg(newpacket.ip4_src);
         }
-
     }
 
 

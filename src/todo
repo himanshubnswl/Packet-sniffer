@@ -23,6 +23,8 @@ make a complete gui
 
 make it more efficient, currently its slower at showing packets than wireshark, need to make some changes to make it fast
 
-make the ipv4 and ipv6 struct handle and store all the fields of a regular ipv4 and ipv6 packet
+make the ipv4 and ipv6 struct handle and store all the fields of a regular ipv4 and ipv6 packet --today
+
+add ipv6 struct and handle it
 
 
