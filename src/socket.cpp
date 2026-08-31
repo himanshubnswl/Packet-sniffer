@@ -112,6 +112,19 @@ namespace Socket {
         return 0;
     }
 
+    void handle_ipc6packet(packet_info &newpacket, const uchar *pkt_data) {
+        struct ipv6_header {
+            uint8_t version_traffic;
+            uint8_t traffic_flow;
+            uint16_t flow_label;
+            uint16_t playload_length;
+            uint8_t next_header;
+            uint8_t hop_limit;
+            uint16_t source_addr[8];
+            uint16_t dest_addr[8];
+        };
+    }
+
     void handle_ipv4packet(packet_info &newpacket, const uchar *pkt_data) {
         //the ipv4 header struct, needs to be changed to incorporate all the fields of the header
         //and remove the constructor mechanism
@@ -119,17 +132,18 @@ namespace Socket {
             uint8_t version;
             //always equal to 4 for IPv4, also contains the IHL field, 4-4,IHL specifies the number of 32-bit words in the header
             uint8_t DSCP_ECN; //specifies differentiated service
-            uint16_t total_lenght;//specifies the entire packet size in bytes, including header and data
-            uint16_t identification;//primarily used for uniquely identifying the group of fragments of a single IP datagram
+            uint16_t total_lenght; //specifies the entire packet size in bytes, including header and data
+            uint16_t identification;
+            //primarily used for uniquely identifying the group of fragments of a single IP datagram
             uint16_t flag_fragmentoffset; //fragment bits,later 13 bits specify offset of fragment
-            uint8_t time_to_live;//limits a datagrams lifetime to prevent network failure
-            uint8_t protocol;//protocol encapsulated in the data portion of the ip datagram
-            uint16_t header_checksum;//error checking of header
-            uint8_t source_addr[4];//constains the ip address of the sender of the packet
-            uint8_t dest_addr[4];//ip address of intended receiver
+            uint8_t time_to_live; //limits a datagrams lifetime to prevent network failure
+            uint8_t protocol; //protocol encapsulated in the data portion of the ip datagram
+            uint16_t header_checksum; //error checking of header
+            uint8_t source_addr[4]; //constains the ip address of the sender of the packet
+            uint8_t dest_addr[4]; //ip address of intended receiver
         };
 
-        const auto* ipv4head = reinterpret_cast<const ipv4_header*>(pkt_data);
+        const auto *ipv4head = reinterpret_cast<const ipv4_header *>(pkt_data);
         switch (ipv4head->protocol) {
             case 1:
                 newpacket.protocol = "ICMP";
