@@ -43,9 +43,9 @@ QVariant MyModel::data(const QModelIndex &index, int role) const {
             case 5:
                 return packet.protocol;
             case 6:
-                return packet.ip4_src;
+                return packet.ip_src;
             case 7:
-                return packet.ip4_dest;
+                return packet.ip_dest;
             case 8:
                 return packet.additional_info;
             default:
@@ -89,8 +89,8 @@ packet_info MyModel::give_example() {
     test.mac_dest = QString{"AA:BB:CC:DD:EE:FF"};
     test.int_type = QString{"IPV4"};
     test.protocol = QString{"TCP"};
-    test.ip4_src = QString{"192.168.1.50"};
-    test.ip4_dest = QString{"192.168.1.60"};
+    test.ip_src = QString{"192.168.1.50"};
+    test.ip_dest = QString{"192.168.1.60"};
 
     return test;
 }

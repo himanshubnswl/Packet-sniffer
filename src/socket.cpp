@@ -114,15 +114,26 @@ namespace Socket {
 
     void handle_ipc6packet(packet_info &newpacket, const uchar *pkt_data) {
         struct ipv6_header {
-            uint8_t version_traffic;
-            uint8_t traffic_flow;
-            uint16_t flow_label;
-            uint16_t playload_length;
-            uint8_t next_header;
-            uint8_t hop_limit;
-            uint16_t source_addr[8];
-            uint16_t dest_addr[8];
+            uint8_t version_traffic;//constant 0110
+            uint8_t traffic_flow;//holds DS field 6 bits, 2-bits explicit congestion notification
+            uint16_t flow_label;//high entropy identifier of a flow
+            uint16_t playload_length;//size of playload in octets, including extension headers
+            uint8_t next_header;//specifies type of next header, typically specifies transport layer
+            uint8_t hop_limit;//replacement to TTL in ipv4
+            uint16_t source_addr[8];//unicast ipv6 addr of sending node
+            uint16_t dest_addr[8];//unicast or multicast addr of destination node(s)
         };
+
+        const auto *header = reinterpret_cast<const ipv6_header *>(pkt_data);
+
+        newpacket.ip_src = QString::asprintf("%0X:%0X:%0X:%0X:%0X:%0X:%0X:%0x", header->source_addr[0],
+                                             header->source_addr[1], header->source_addr[2], header->source_addr[3],
+                                             header->source_addr[4], header->source_addr[5], header->source_addr[6],
+                                             header->source_addr[7]);
+        newpacket.ip_dest = QString::asprintf("%0X:%0X:%0X:%0X:%0X:%0X:%0X:%0X", header->dest_addr[0],
+                                              header->dest_addr[1], header->dest_addr[2], header->dest_addr[3],
+                                              header->dest_addr[4], header->dest_addr[5], header->dest_addr[6],
+                                              header->dest_addr[7]);
     }
 
     void handle_ipv4packet(packet_info &newpacket, const uchar *pkt_data) {
@@ -168,11 +179,11 @@ namespace Socket {
                 break;
             default: break;
         }
-        newpacket.ip4_src = QString::asprintf("%d.%d.%d.%d", ipv4head->source_addr[0], ipv4head->source_addr[1],
-                                              ipv4head->source_addr[2], ipv4head->source_addr[3]);
+        newpacket.ip_src = QString::asprintf("%d.%d.%d.%d", ipv4head->source_addr[0], ipv4head->source_addr[1],
+                                             ipv4head->source_addr[2], ipv4head->source_addr[3]);
 
-        newpacket.ip4_dest = QString::asprintf("%d.%d.%d.%d", ipv4head->dest_addr[0], ipv4head->dest_addr[1],
-                                               ipv4head->dest_addr[2], ipv4head->dest_addr[3]);
+        newpacket.ip_dest = QString::asprintf("%d.%d.%d.%d", ipv4head->dest_addr[0], ipv4head->dest_addr[1],
+                                              ipv4head->dest_addr[2], ipv4head->dest_addr[3]);
     }
 
     void handle_ARP(packet_info &newpacket, const uchar *pkt_data) {
@@ -196,18 +207,18 @@ namespace Socket {
         newpacket.mac_dest = QString::asprintf("%0X:%0X:%0X:%0X:%0X:%0X", packet->target_mac[0], packet->target_mac[1],
                                                packet->target_mac[2], packet->target_mac[3], packet->target_mac[4],
                                                packet->target_mac[5]); //mac target addr
-        newpacket.ip4_src = QString::asprintf("%d.%d.%d.%d", packet->sender_ip[0], packet->sender_ip[1],
-                                              packet->sender_ip[2], packet->sender_ip[3]); //source ip addr
-        newpacket.ip4_dest = QString::asprintf("%d.%d.%d.%d", packet->target_ip[0], packet->target_ip[1],
-                                               packet->target_ip[2], packet->target_ip[3]); //the target ip addr
+        newpacket.ip_src = QString::asprintf("%d.%d.%d.%d", packet->sender_ip[0], packet->sender_ip[1],
+                                             packet->sender_ip[2], packet->sender_ip[3]); //source ip addr
+        newpacket.ip_dest = QString::asprintf("%d.%d.%d.%d", packet->target_ip[0], packet->target_ip[1],
+                                              packet->target_ip[2], packet->target_ip[3]); //the target ip addr
 
 
         if (ntohs(packet->opcode) == 1) {
             newpacket.protocol = QString{"ARP Request"};
-            newpacket.additional_info = QString("who has the ip addr %1").arg(newpacket.ip4_dest);
+            newpacket.additional_info = QString("who has the ip addr %1").arg(newpacket.ip_dest);
         } else if (ntohs(packet->opcode) == 2) {
             newpacket.protocol = QString("ARP Reply");
-            newpacket.additional_info = QString("I have %1").arg(newpacket.ip4_src);
+            newpacket.additional_info = QString("I have %1").arg(newpacket.ip_src);
         }
     }
 

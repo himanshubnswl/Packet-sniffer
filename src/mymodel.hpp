@@ -9,8 +9,8 @@ struct packet_info {
     QString mac_dest;
     QString int_type;
     QString protocol;
-    QString ip4_src;
-    QString ip4_dest;
+    QString ip_src;
+    QString ip_dest;
     QString additional_info;
     QString timestamp;
 };
