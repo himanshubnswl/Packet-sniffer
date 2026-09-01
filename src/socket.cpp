@@ -112,7 +112,7 @@ namespace Socket {
         return 0;
     }
 
-    void handle_ipc6packet(packet_info &newpacket, const uchar *pkt_data) {
+    void handle_ipv6packet(packet_info &newpacket, const uchar *pkt_data) {
         struct ipv6_header {
             uint8_t version_traffic;//constant 0110
             uint8_t traffic_flow;//holds DS field 6 bits, 2-bits explicit congestion notification
@@ -253,6 +253,7 @@ namespace Socket {
                 break;
             case 0x86DD:
                 newpacket.int_type = "IPV6";
+                handle_ipv6packet(newpacket, pkt_data + 14);
                 break;
             case 0x0806:
                 newpacket.int_type = "ARP";
